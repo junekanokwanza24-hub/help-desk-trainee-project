@@ -26,6 +26,29 @@ interface TicketsResponse {
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
+interface Attachment {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+}
+
+interface TicketDetail {
+  id: string;
+  title: string;
+  description: string;
+  status: TicketStatus;
+  priority: PriorityType;
+  department: string | null;
+  phoneNumber: string | null;
+  reporterName: string | null;
+  deviceName: string | null;
+  createdAt: string;
+  category: { id: string; name: string };
+  createdBy: { id: string; firstName: string; lastName: string };
+  assignedTo: { id: string; firstName: string; lastName: string } | null;
+  attachments: Attachment[];
+}
+
 const STATUS_STYLE: Record<
   TicketStatus,
   { bg: string; text: string; label: string }
@@ -43,6 +66,7 @@ const PRIORITY_STYLE: Record<PriorityType, { text: string; label: string }> = {
 };
 
 const API_BASE = "http://localhost:3006";
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg)$/i;
 
 export default function TicketsListPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -58,6 +82,7 @@ export default function TicketsListPage() {
   const [users, setUsers] = useState<
     { id: string; firstName: string; lastName: string }[]
   >([]);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const currentUser = getCurrentUser();
   const admin = isAdmin(currentUser);
 
@@ -322,13 +347,13 @@ export default function TicketsListPage() {
                       style={{ borderBottom: "1px solid #F0ECF4" }}
                     >
                       <td className="px-4 py-3">
-                        <a
-                          href={`/tickets/${t.id}`}
-                          className="text-[13.5px] font-medium hover:underline"
+                        <button
+                          onClick={() => setSelectedTicketId(t.id)}
+                          className="text-[13.5px] font-medium hover:underline text-left"
                           style={{ color: "#1E1522" }}
                         >
                           {t.title}
-                        </a>
+                        </button>
                       </td>
                       <td
                         className="px-4 py-3 text-[13px]"
@@ -466,6 +491,220 @@ export default function TicketsListPage() {
         onClose={() => setModalOpen(false)}
         onCreated={fetchTickets}
       />
+
+      {selectedTicketId && (
+        <TicketDetailModal
+          ticketId={selectedTicketId}
+          onClose={() => setSelectedTicketId(null)}
+        />
+      )}
     </AppShell>
+  );
+}
+
+function TicketDetailModal({
+  ticketId,
+  onClose,
+}: {
+  ticketId: string;
+  onClose: () => void;
+}) {
+  const [ticket, setTicket] = useState<TicketDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      setLoading(true);
+      setErrorMsg("");
+      try {
+        const res = await fetch(`${API_BASE}/tickets/${ticketId}`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+        if (!res.ok) throw new Error();
+        const data: TicketDetail = await res.json();
+        setTicket(data);
+      } catch {
+        setErrorMsg("Couldn't load ticket details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetail();
+  }, [ticketId]);
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+      >
+        <div
+          className="flex items-center gap-2 px-5 py-4 border-b shrink-0"
+          style={{ borderColor: "#E8E2EE" }}
+        >
+          <h2
+            className="text-[15px] font-medium flex-1 truncate"
+            style={{ color: "#1E1522" }}
+          >
+            {ticket?.title ?? "Ticket details"}
+          </h2>
+          <button onClick={onClose} aria-label="Close">
+            <Icon icon="mdi:close" width={20} height={20} color="#9891A0" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto px-5 py-4 flex flex-col gap-4">
+          {loading && (
+            <p className="text-[13px]" style={{ color: "#9891A0" }}>
+              Loading…
+            </p>
+          )}
+
+          {errorMsg && (
+            <p className="text-[13px]" style={{ color: "#A32D2D" }}>
+              {errorMsg}
+            </p>
+          )}
+
+          {!loading && ticket && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[12px]" style={{ color: "#9891A0" }}>
+                  {ticket.category.name}
+                </span>
+                <span
+                  className="text-[12px] font-medium"
+                  style={{ color: PRIORITY_STYLE[ticket.priority].text }}
+                >
+                  {PRIORITY_STYLE[ticket.priority].label} priority
+                </span>
+                <span
+                  className="inline-flex px-2 py-1 rounded-md text-[11.5px] font-medium"
+                  style={{
+                    backgroundColor: STATUS_STYLE[ticket.status].bg,
+                    color: STATUS_STYLE[ticket.status].text,
+                  }}
+                >
+                  {STATUS_STYLE[ticket.status].label}
+                </span>
+              </div>
+
+              <div>
+                <p
+                  className="text-[11.5px] font-medium mb-1"
+                  style={{ color: "#9891A0" }}
+                >
+                  DESCRIPTION
+                </p>
+                <p className="text-[13.5px]" style={{ color: "#1E1522" }}>
+                  {ticket.description || "—"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <InfoField label="Reported by" value={ticket.reporterName} />
+                <InfoField label="Department" value={ticket.department} />
+                <InfoField label="Phone" value={ticket.phoneNumber} />
+                <InfoField label="Device" value={ticket.deviceName} />
+                <InfoField
+                  label="Created by"
+                  value={`${ticket.createdBy.firstName} ${ticket.createdBy.lastName}`}
+                />
+                <InfoField
+                  label="Assigned to"
+                  value={
+                    ticket.assignedTo
+                      ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`
+                      : "Unassigned"
+                  }
+                />
+              </div>
+
+              <div>
+                <p
+                  className="text-[11.5px] font-medium mb-2"
+                  style={{ color: "#9891A0" }}
+                >
+                  ATTACHMENTS ({ticket.attachments.length})
+                </p>
+                {ticket.attachments.length === 0 ? (
+                  <p className="text-[13px]" style={{ color: "#9891A0" }}>
+                    No files attached.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {ticket.attachments.map((a) =>
+                      IMAGE_EXT.test(a.fileName) ? (
+                        <a
+                          key={a.id}
+                          href={a.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block rounded-lg overflow-hidden"
+                          style={{ border: "1px solid #E8E2EE" }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={a.fileUrl}
+                            alt={a.fileName}
+                            className="w-full h-20 object-cover"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          key={a.id}
+                          href={a.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center justify-center gap-1 h-20 rounded-lg px-1"
+                          style={{ border: "1px solid #E8E2EE" }}
+                        >
+                          <Icon
+                            icon="mdi:file-outline"
+                            width={20}
+                            height={20}
+                            color="#746B7E"
+                          />
+                          <span
+                            className="text-[10.5px] text-center truncate w-full"
+                            style={{ color: "#746B7E" }}
+                          >
+                            {a.fileName}
+                          </span>
+                        </a>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
+  return (
+    <div>
+      <p className="text-[11.5px]" style={{ color: "#9891A0" }}>
+        {label}
+      </p>
+      <p className="text-[13px]" style={{ color: "#1E1522" }}>
+        {value || "—"}
+      </p>
+    </div>
   );
 }

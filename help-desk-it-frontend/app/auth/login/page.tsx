@@ -47,35 +47,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white">
-      {/* Left: form */}
-      <div className="flex-1 flex flex-col justify-between px-8 py-10 sm:px-16 lg:px-24">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "#F3EDF9" }}
-          >
-            <Icon icon="mdi:headset" width={18} height={18} color="#613189" />
+    <div
+      className="min-h-screen w-full flex items-center justify-center px-6"
+      style={{ backgroundColor: "#FAF8FB" }}
+    >
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+
+        {/* Card */}
+        <div
+          className="rounded-2xl px-7 py-8"
+          style={{
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #E8E2EE",
+          }}
+        >
+          <div className="flex flex-col items-center mb-8">
+            <span
+              className="text-[16px] font-medium tracking-tight"
+              style={{ color: "#1E1522" }}
+            >
+              HospitalCare IT Helpdesk
+            </span>
           </div>
-          <span
-            className="text-[15px] font-medium tracking-tight"
-            style={{ color: "#1E1522" }}
-          >
-            HelpDesk IT
-          </span>
-        </div>
-
-        <div className="w-full max-w-sm mx-auto">
+          <div className="flex items-center justify-center">
+            <img src={"/logo.png"} width={150} height={150} />
+          </div>
           <h1
-            className="text-[26px] font-medium leading-tight mb-2"
+            className="text-[20px] font-medium leading-tight mb-1 text-center"
             style={{ color: "#1E1522" }}
           >
-            Sign in to IT helpdesk
+            Sign in
           </h1>
-          <p className="text-[14px] mb-8" style={{ color: "#746B7E" }}>
-            Log tickets, track fixes, and get support to the right person.
+          <p
+            className="text-[13.5px] mb-7 text-center"
+            style={{ color: "#746B7E" }}
+          >
+            Report equipment issues and track repairs across every department
+            and ward.
           </p>
-
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
@@ -83,14 +93,14 @@ export default function LoginPage() {
                 className="block text-[13px] font-medium mb-1.5"
                 style={{ color: "#1E1522" }}
               >
-                Email
+                Staff email
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@obomgauge.com"
+                placeholder="name@hospitalcare.go.th"
                 className="w-full h-11 px-3.5 rounded-lg text-[14px] outline-none transition-colors"
                 style={{
                   border: "1px solid #E8E2EE",
@@ -168,72 +178,13 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-[12.5px]" style={{ color: "#9891A0" }}>
-          Internal system.
+        <p
+          className="text-[12px] text-center mt-6"
+          style={{ color: "#9891A0" }}
+        >
+          Internal system — hospital staff only. For urgent equipment failures
+          affecting patient care, call the IT hotline directly.
         </p>
-      </div>
-
-      {/* Right: brand panel */}
-      <div
-        className="hidden lg:flex flex-1 relative items-center justify-center overflow-hidden"
-        style={{ backgroundColor: "#613189" }}
-      >
-        <svg viewBox="0 0 360 360" className="w-[340px] h-[340px]" fill="none">
-          <circle
-            cx="180"
-            cy="180"
-            r="150"
-            stroke="#8C5CB0"
-            strokeWidth="1"
-            opacity="0.5"
-          />
-          <circle
-            cx="180"
-            cy="180"
-            r="115"
-            stroke="#8C5CB0"
-            strokeWidth="1"
-            opacity="0.4"
-          />
-          {Array.from({ length: 40 }).map((_, i) => {
-            const angle = (i / 40) * 2 * Math.PI - Math.PI / 2;
-            const inner = 128;
-            const outer = i % 5 === 0 ? 145 : 138;
-            const x1 = 180 + inner * Math.cos(angle);
-            const y1 = 180 + inner * Math.sin(angle);
-            const x2 = 180 + outer * Math.cos(angle);
-            const y2 = 180 + outer * Math.sin(angle);
-            return (
-              <line
-                key={i}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="#C9AEDD"
-                strokeWidth={i % 5 === 0 ? 2 : 1}
-                opacity={i % 5 === 0 ? 0.9 : 0.5}
-              />
-            );
-          })}
-          <line
-            x1="180"
-            y1="180"
-            x2="255"
-            y2="120"
-            stroke="#FFFFFF"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <circle cx="180" cy="180" r="8" fill="#FFFFFF" />
-        </svg>
-
-        <div className="absolute bottom-12 left-12 right-12">
-          <p className="text-[13px] mb-1" style={{ color: "#D8C4E8" }}>
-            Avg. resolution time, today
-          </p>
-          <p className="text-[32px] font-medium text-white">2.4 hrs</p>
-        </div>
       </div>
     </div>
   );
